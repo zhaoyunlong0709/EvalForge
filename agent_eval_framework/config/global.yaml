@@ -1,0 +1,55 @@
+# 全局配置
+# 对应《Agent评测框架设计方案》配置管理层 + 4.7 CostTracker 定价 + 9 可复现性设计
+
+agent:
+  # Agent API 端点（被测系统，需实现文档 4.4 的 Agent API 契约）
+  endpoint: "https://agent-api.example.com/v1/chat"
+  timeout_ms: 30000
+  # Agent 温度固定为 0（可复现性要求，见文档第 9 节）
+  temperature: 0
+
+judge:
+  # Judge 模型：火山方舟 DeepSeek（OpenAI 兼容端点）
+  # 模型 ID 以火山方舟控制台为准（模型推理 -> 接入模型），或使用你创建的接入点 ep-xxxx
+  model: "glm-5.3"
+  # 火山方舟 OpenAI 兼容端点
+  base_url: "https://ark.cn-beijing.volces.com/api/v3"
+  # API Key 从此环境变量读取（避免密钥明文入 git）
+  # 使用方法：export ARK_API_KEY="ark-xxxxx"
+  api_key_env: "ARK_API_KEY"
+  # Judge 温度固定为 0
+  temperature: 0
+  max_tokens: 500
+  # Judge 返回格式异常时的重试次数（JudgeEvaluator 基础版，Phase 1）
+  retry_count: 3
+  retry_delay_ms: 1000
+
+# CostTracker 定价表（$/1M tokens）
+# 定价从配置读取，不硬编码（文档 4.7），模型价格常变，按需更新
+pricing:
+  glm-5.3:
+    input: 0.41
+    output: 1.68
+  deepseek-chat:
+    input: 0.28
+    output: 1.10
+  gpt-4o-2024-08-06:
+    input: 2.5
+    output: 10.0
+  gpt-4o-mini:
+    input: 0.15
+    output: 0.6
+  claude-3-5-sonnet:
+    input: 3.0
+    output: 15.0
+
+# 可复现性（文档第 9 节）
+reproducibility:
+  agent_seed: 42
+  judge_seed: 42
+
+# APIExecutor 重试策略（tenacity）
+api_retry:
+  max_attempts: 3
+  wait_min_ms: 1000
+  wait_max_ms: 10000

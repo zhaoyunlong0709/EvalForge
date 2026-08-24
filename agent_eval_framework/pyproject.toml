@@ -1,0 +1,36 @@
+[project]
+name = "eval-forge"
+version = "0.1.0"
+description = "轻量、可扩展、工程化的 Agent 评测框架，同时提供原生 API 测试能力"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "pydantic>=2.0",
+    "httpx>=0.25",
+    "openai>=1.0",
+    "pytest>=7.0",
+    "Jinja2>=3.0",
+    "loguru>=0.7",
+    "click>=8.0",
+    "tenacity>=8.0",
+    "PyYAML>=6.0",
+]
+
+[project.scripts]
+eval-forge = "eval_core.cli.main:cli"
+
+[project.optional-dependencies]
+dev = [
+    "pytest-asyncio>=0.23",
+]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["eval_core*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"

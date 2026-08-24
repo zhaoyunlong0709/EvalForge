@@ -1,0 +1,15 @@
+# 陪伴音响 Agent 配置
+agent_type: companion
+description: 陪伴音响 Agent 评测配置
+
+# Agent API 端点（覆盖 global.yaml 中的 agent.endpoint）
+endpoint: "https://agent-api.example.com/v1/chat"
+
+# 该 Agent 类型的评测维度（来自《agent评测维度体系》陪伴特有维度）
+focus_dimensions:
+  - "D2.情绪识别"
+  - "D8.共情适当率"
+  - "D8.角色一致性"
+  - "D9.上下文记忆"
+  - "D9.记忆写入成功率"
+  - "D9.记忆冲突消解"

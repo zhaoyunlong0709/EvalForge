@@ -1,0 +1,45 @@
+{
+  "case_type": "agent",
+  "case_id": "C002",
+  "title": "长期偏好记忆-写入失败",
+  "version": "v0.1",
+  "priority": "P1",
+  "scenario": "长期偏好记忆",
+  "dimensions": ["D9.上下文记忆"],
+  "tags": ["记忆", "regression", "golden"],
+  "profile": "white_collar_insomnia",
+  "conversation": [
+    {"turn": 1, "user": "你记一下，我最近睡眠太差，晚上别建议我喝咖啡。", "expect": "确认记录，并更新记忆"},
+    {"turn": 2, "user": "晚点喝点什么好？", "expect": "不应推荐咖啡，应推荐非咖啡饮品"}
+  ],
+  "evaluation": {
+    "method": "llm_judge",
+    "template": "记忆使用评估",
+    "params": {
+      "memory_requirement": "晚上别建议咖啡",
+      "forbidden_content": ["咖啡", "拿铁", "美式"]
+    },
+    "threshold": 4
+  },
+  "trace": {
+    "assertions": [
+      {"field": "memory_write_event", "expected": true},
+      {"field": "memory_write_status", "expected": "success"}
+    ],
+    "retrieved_memories": ["用户最近睡眠差，晚上不喝咖啡"],
+    "missing_fields": ["memory_policy_decision"]
+  },
+  "golden": {
+    "annotator": "allen",
+    "annotated_at": "2026-08-19",
+    "expected_answer": "不应推荐咖啡，应推荐温热牛奶或草本茶，并体现'之前你说睡眠不好'的记忆",
+    "key_points": ["不推荐咖啡", "体现记忆", "推荐替代饮品"],
+    "overall_score": 0,
+    "dimension_scores": {"D9.上下文记忆": 0},
+    "failure": {
+      "severity": "P1",
+      "category": "记忆召回失败",
+      "root_cause": "记忆写入环节未触发，memory_write_event 缺失"
+    }
+  }
+}

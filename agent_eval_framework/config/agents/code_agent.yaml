@@ -1,0 +1,5 @@
+# Agent 配置（占位，接入实际产品时完善）
+agent_type: code_agent
+description: "TODO: 接入实际产品时完善"
+endpoint: "https://agent-api.example.com/v1/chat"
+focus_dimensions: []

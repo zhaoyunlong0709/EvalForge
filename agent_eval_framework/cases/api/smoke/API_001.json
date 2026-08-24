@@ -1,0 +1,23 @@
+{
+  "case_type": "api",
+  "case_id": "API_001",
+  "title": "健康检查",
+  "version": "v0.1",
+  "priority": "P0",
+  "scenario": "系统监控",
+  "tags": ["smoke"],
+  "request": {
+    "method": "GET",
+    "url": "https://api.example.com/health",
+    "headers": {"Authorization": "Bearer {{API_TOKEN}}"},
+    "timeout_ms": 5000
+  },
+  "evaluation": {
+    "method": "automated",
+    "rules": [
+      {"field": "status_code", "operator": "eq", "value": 200},
+      {"field": "body.status", "operator": "eq", "value": "ok"},
+      {"field": "latency_ms", "operator": "lt", "value": 1000}
+    ]
+  }
+}

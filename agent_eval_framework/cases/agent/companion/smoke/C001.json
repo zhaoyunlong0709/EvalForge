@@ -1,0 +1,20 @@
+{
+  "case_type": "agent",
+  "case_id": "C001",
+  "title": "晚间情绪陪伴-共情回应",
+  "version": "v0.1",
+  "priority": "P1",
+  "scenario": "晚间情绪陪伴",
+  "dimensions": ["D2.情绪识别", "D8.共情适当率"],
+  "tags": ["陪伴", "情绪", "smoke"],
+  "profile": "white_collar_insomnia",
+  "conversation": [
+    {"turn": 1, "user": "我今天又被老板否了方案，感觉自己特别没用。", "expect": "先共情，不急于给解决方案"}
+  ],
+  "evaluation": {
+    "method": "llm_judge",
+    "template": "共情评估",
+    "params": {"user_emotion": "挫败/悲伤"},
+    "threshold": 4
+  }
+}
