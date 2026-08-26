@@ -186,16 +186,12 @@ class MarkdownReporter:
         if snapshot:
             agent = snapshot.get("agent", {})
             judge = snapshot.get("judge", {})
-            seeds = snapshot.get("seeds", {})
             w("| 配置项 | 值 |")
             w("|--------|-----|")
             w(f"| Agent 端点 | {agent.get('endpoint', '')} |")
             w(f"| Agent 温度 | {agent.get('temperature', '')} |")
             w(f"| Judge 模型 | {judge.get('model', '')} |")
             w(f"| Judge 温度 | {judge.get('temperature', '')} |")
-            if seeds:
-                w(f"| Agent 种子 | {seeds.get('agent_seed', '未设置')} |")
-                w(f"| Judge 种子 | {seeds.get('judge_seed', '未设置')} |")
             w(f"| 用例数 | {snapshot.get('case_count', '')} |")
             w("")
 
@@ -204,9 +200,14 @@ class MarkdownReporter:
             w("")
             w("| 调用方 | 请求数 | 输入 token | 输出 token |")
             w("|--------|--------|-----------|-----------|")
-            for caller, s in cost_summary.items():
-                w(f"| {caller} | {s.get('requests', 0)} | "
-                  f"{s.get('input_tokens', 0)} | {s.get('output_tokens', 0)} |")
+            by_caller = cost_summary.get("by_caller", {})
+            if by_caller:
+                for caller, s in by_caller.items():
+                    w(f"| {caller} | {s.get('requests', 0)} | "
+                      f"{s.get('input_tokens', 0)} | {s.get('output_tokens', 0)} |")
+            else:
+                w(f"| 全部 | {cost_summary.get('total_calls', 0)} | - | - |")
+                w(f"| 总成本 | ${cost_summary.get('total_cost_usd', 0):.6f} | | |")
             w("")
 
         w("---")

@@ -96,8 +96,6 @@ class ConsoleReporter:
             w("可复现性快照:")
             w(f"  Agent: {snapshot.get('agent', {}).get('endpoint', '')}")
             w(f"  Judge: {snapshot.get('judge', {}).get('model', '')}")
-            seeds = snapshot.get("seeds", {})
-            w(f"  种子: agent={seeds.get('agent_seed')}, judge={seeds.get('judge_seed')}")
 
         w("=" * 64)
         return "\n".join(lines)

@@ -98,6 +98,70 @@ class CaseRepository:
             "restored": restored,
         }
 
+    def sync_incremental(self, cases: list[tuple[EvaluableCase, str]]) -> dict[str, int]:
+        """增量同步：仅同步文件修改时间晚于上次同步的 case。
+
+        1000+ case 时，全量同步 O(n) 文件 IO 不可接受。
+        增量同步只处理变更的文件，未变更的跳过。
+        """
+        now = datetime.now().isoformat()
+        synced = 0
+        restored = 0
+        skipped = 0
+
+        # 获取上次同步时间
+        last_sync = self._get_last_sync_time()
+
+        for case, file_path in cases:
+            fp = Path(file_path)
+            if fp.exists() and last_sync:
+                mtime = fp.stat().st_mtime
+                if mtime <= last_sync:
+                    # 检查 SQLite 是否已有此记录
+                    existing = self.conn.execute(
+                        "SELECT updated_at FROM cases WHERE case_id = ?",
+                        (case.case_id,),
+                    ).fetchone()
+                    if existing:
+                        skipped += 1
+                        continue
+
+            restored += self._upsert(case, str(file_path), now)
+            synced += 1
+
+        # 标记文件已删除
+        deprecated = self._mark_deleted_files(now)
+
+        # 更新同步时间
+        self._set_last_sync_time(now)
+
+        self.conn.commit()
+        logger.info(
+            f"SQLite 增量同步完成: {synced} 条 UPSERT, {skipped} 条跳过, "
+            f"{deprecated} 条标记作废"
+        )
+        return {
+            "synced": synced, "skipped": skipped,
+            "deprecated": deprecated, "restored": restored,
+        }
+
+    def _get_last_sync_time(self) -> float | None:
+        """获取上次同步时间戳。"""
+        try:
+            row = self.conn.execute(
+                "SELECT MAX(updated_at) as latest FROM cases"
+            ).fetchone()
+            if row and row["latest"]:
+                from datetime import datetime as dt
+                return dt.fromisoformat(row["latest"]).timestamp()
+        except Exception:
+            pass
+        return None
+
+    def _set_last_sync_time(self, timestamp: str) -> None:
+        """记录同步时间（通过 updated_at 字段隐式记录）。"""
+        pass  # 不需要额外操作，updated_at 已记录
+
     def _mark_deleted_files(self, now: str) -> int:
         """标记 file_path 已不存在的记录为 deprecated。"""
         rows = self.conn.execute(

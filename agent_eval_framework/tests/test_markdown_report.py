@@ -130,8 +130,7 @@ class TestMarkdownReporter:
         snapshot = {
             "agent": {"endpoint": "http://agent.example.com", "temperature": 0},
             "judge": {"model": "gpt-4o", "temperature": 0},
-            "seeds": {"agent_seed": 42, "judge_seed": 42},
-            "case_count": 1,
+                        "case_count": 1,
         }
         text = MarkdownReporter().generate(cases, agg, snapshot=snapshot)
         assert "gpt-4o" in text

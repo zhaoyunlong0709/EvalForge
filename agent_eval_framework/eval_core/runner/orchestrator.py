@@ -50,10 +50,34 @@ class Orchestrator:
             self._semaphore = asyncio.Semaphore(self.concurrency)
 
     async def run(self, cases: list[EvaluableCase]) -> list[EvaluableCase]:
-        """执行所有 case。concurrency=1 串行；>1 并发（gather 保序）。"""
+        """执行所有 case。concurrency=1 串行；>1 并发（gather 保序）。
+        有 depends_on 的 case 自动排序，被依赖的 case 先执行。"""
+        cases = self._resolve_dependencies(cases)
         if self.concurrency > 1:
             return await self._run_concurrent(cases)
         return await self._run_serial(cases)
+
+    def _resolve_dependencies(self, cases: list[EvaluableCase]) -> list[EvaluableCase]:
+        """按 depends_on 字段排序：被依赖的 case 先执行。"""
+        # 构建 case_id -> case 的映射
+        case_map = {c.case_id: c for c in cases}
+        # 拓扑排序
+        visited: set[str] = set()
+        ordered: list[EvaluableCase] = []
+
+        def visit(case: EvaluableCase):
+            dep_id = getattr(case, "depends_on", "") or ""
+            if dep_id and dep_id in case_map and dep_id not in visited:
+                visit(case_map[dep_id])
+            if case.case_id not in visited:
+                visited.add(case.case_id)
+                ordered.append(case)
+
+        for c in cases:
+            if c.case_id not in visited:
+                visit(c)
+
+        return ordered
 
     async def _run_serial(self, cases: list[EvaluableCase]) -> list[EvaluableCase]:
         """串行执行（原有逻辑，默认模式）。"""

@@ -86,10 +86,15 @@ def cli() -> None:
     help="只校验用例格式，不执行评测。用于用例开发阶段快速检查",
 )
 @click.option("--log-level", default="INFO", type=click.Choice(["DEBUG", "INFO", "WARNING", "ERROR"]))
+@click.option(
+    "--mock", "mock_mode", is_flag=True,
+    help="Mock 模式：不调真实 Agent 和 Judge API，使用 golden 标注作为评分依据",
+)
 def run(
     case_files, case_dirs, tags, priorities, dimensions,
     config_path, cases_dir, profiles_dir, report_dir,
     pass_k, pass_threshold, concurrency, save_baseline, baselines_dir, dry_run, log_level,
+    mock_mode,
 ) -> None:
     """运行评测：加载用例 -> 执行 -> 评测 -> 报告"""
     setup_logger(log_level)
@@ -111,6 +116,7 @@ def run(
                 save_baseline=save_baseline,
                 baselines_dir=baselines_dir,
                 dry_run=dry_run,
+                mock_mode=mock_mode,
             )
         )
     except Exception as e:  # noqa: BLE001 - CLI 兜底，任何异常返回退出码 1
@@ -125,10 +131,10 @@ async def _run(
     config_path: Path, cases_dir: Path, profiles_dir: Path, report_dir: Path,
     pass_k: int = 1, pass_threshold: int = 1, concurrency: int = 1,
     save_baseline: str | None = None, baselines_dir: Path | None = None,
-    dry_run: bool = False,
+    dry_run: bool = False, mock_mode: bool = False,
 ) -> int:
     """执行完整评测流程，返回退出码（0=全部通过，1=有失败）。"""
-    from eval_core.evaluators import EvaluatorPipeline, create_judge_evaluator
+    from eval_core.evaluators import EvaluatorPipeline, JudgeEvaluator, TemplateEngine, create_judge_evaluator
     from eval_core.loader import CaseDiscoverer, CaseFilter, create_loader_registry
     from eval_core.report import ReportBuilder
     from eval_core.result import (
@@ -235,6 +241,64 @@ async def _run(
         judge_config=judge_config,
         cost_tracker=cost_tracker,
     )
+
+    # ---- 4.5 Mock 模式：替换 Agent 和 Judge 为 Mock 实现 ----
+    if mock_mode:
+        import httpx
+        from eval_core.evaluators.judge.judge_client import JudgeClient, JudgeResult
+
+        logger.info("🔧 Mock 模式：跳过真实 Agent 和 Judge API")
+
+        # Mock Agent：返回通用回复
+        agent_runner = AgentRunner(
+            endpoint="https://mock-agent.local",
+            transport=httpx.MockTransport(
+                lambda req: httpx.Response(200, json={
+                    "reply": "Mock Agent 回复",
+                    "trace": {"session_id": "mock"},
+                    "usage": {},
+                })
+            ),
+            cost_tracker=cost_tracker,
+        )
+
+        # Mock Judge：根据 golden 标注返回分数
+        class MockJudgeClientCLI(JudgeClient):
+            def __init__(self, cases):
+                super().__init__(model="mock-judge", api_key="mock")
+                self._idx = 0
+                self._scores = self._prepare_scores(cases)
+
+            @staticmethod
+            def _prepare_scores(cases):
+                scores = []
+                for c in cases:
+                    if hasattr(c, "golden") and c.golden and c.golden.overall_score > 0:
+                        s = float(c.golden.overall_score)
+                        dims = c.golden.dimension_scores
+                        reason = "Mock: golden 标注"
+                    else:
+                        s = 0.0
+                        dims = {}
+                        reason = "Mock: 无 golden 标注或标注为 0"
+                    scores.append((s, dims, reason))
+                return scores
+
+            async def score(self, prompt, expected_dimensions=None):
+                if self._idx >= len(self._scores):
+                    return JudgeResult(error="Mock 评分已耗尽", model=self.model)
+                s, dims, reason = self._scores[self._idx]
+                self._idx += 1
+                return JudgeResult(score=s, reason=reason, dimension_scores=dims, model=self.model)
+
+        with open(config_path.parent / "prompt_templates.json") as f:
+            import json as _json
+            templates = _json.load(f)["prompt_templates"]
+        mock_judge_evaluator = JudgeEvaluator(
+            TemplateEngine(templates), MockJudgeClientCLI(cases)
+        )
+        judge_evaluator = mock_judge_evaluator
+
     pipeline = EvaluatorPipeline(judge_evaluator=judge_evaluator)
     orchestrator = Orchestrator(
         api_executor, agent_runner, pipeline,
@@ -253,7 +317,6 @@ async def _run(
     snapshot = DependencySnapshotRecorder.record(
         agent_config=agent_config,
         judge_config=judge_config,
-        reproducibility_config=config.get("reproducibility", {}),
         case_count=len(results),
     )
     # ---- 6.5 Baseline 对比 ----

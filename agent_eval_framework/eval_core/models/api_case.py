@@ -32,7 +32,7 @@ class APICase(BaseModel):
     priority: Priority
     scenario: str
     tags: list[str] = []
-    lifecycle: CaseLifecycle = CaseLifecycle()  # ⚠️ [Phase 4] 启用
+    lifecycle: CaseLifecycle = CaseLifecycle()  
 
     # ---- API 请求（必填） ----
     request: APIRequest

@@ -43,8 +43,7 @@ class TestConsoleReporter:
             cases, agg,
             cost_summary={"total_cost_usd": 0.001, "judge_cost_usd": 0.001,
                           "agent_cost_usd": 0.0, "total_calls": 2},
-            snapshot={"agent": {"endpoint": "https://a"}, "judge": {"model": "m"},
-                      "seeds": {"agent_seed": 42, "judge_seed": 42}},
+            snapshot={"agent": {"endpoint": "https://a"}, "judge": {"model": "m"}},
         )
         assert "成本" in text
         assert "可复现性快照" in text

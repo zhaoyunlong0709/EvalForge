@@ -70,12 +70,6 @@ class AgentSetup(BaseModel):
     model_config = ConfigDict(extra="forbid")
     user_profile: str = ""
     preloaded_memories: list[str] = []
-    project_context: str = ""
-    file_structure: list[str] = []
-    customer_profile: str = ""
-    order_history: list[str] = []
-    data_schema: str = ""
-    table_relations: list[str] = []
 
 
 class ToolMock(BaseModel):
@@ -143,6 +137,10 @@ class AgentCase(BaseModel):
 
     # ---- 对话（必填） ----
     conversation: list[ConversationTurn]
+
+    # ---- 依赖管理（可选） ----
+    # 依赖的 case_id，当前 case 在该 case 执行完成后才执行
+    depends_on: str = ""
 
     # ---- 评测配置（必填） ----
     evaluation: AgentEvaluation

@@ -43,11 +43,6 @@ pricing:
     input: 3.0
     output: 15.0
 
-# 可复现性（文档第 9 节）
-reproducibility:
-  agent_seed: 42
-  judge_seed: 42
-
 # APIExecutor 重试策略（tenacity）
 api_retry:
   max_attempts: 3

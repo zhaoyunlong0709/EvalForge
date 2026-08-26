@@ -5,8 +5,6 @@
 路由角色（文档 5.3）：附加评测器。trace_errors / trace_gaps 仅记录，
 不影响 result.passed。
 
-Phase 1 基础版范围：断言求值 + 盲区检测。
-Phase 2 再做：记忆召回校验（retrieved_memories 的模糊匹配）。
 """
 import re
 

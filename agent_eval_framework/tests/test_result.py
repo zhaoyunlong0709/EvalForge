@@ -100,11 +100,9 @@ class TestSnapshot:
         snap = DependencySnapshotRecorder.record(
             agent_config={"endpoint": "https://a", "temperature": 0},
             judge_config={"model": "gpt-4o", "temperature": 0},
-            reproducibility_config={"agent_seed": 42, "judge_seed": 42},
             case_count=10,
         )
         assert snap["agent"]["endpoint"] == "https://a"
         assert snap["judge"]["model"] == "gpt-4o"
-        assert snap["seeds"]["agent_seed"] == 42
         assert snap["case_count"] == 10
         assert snap["recorded_at"]
