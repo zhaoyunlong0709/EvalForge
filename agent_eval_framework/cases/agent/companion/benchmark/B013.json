@@ -1,0 +1,67 @@
+{
+  "case_type": "agent",
+  "case_id": "B013",
+  "title": "工具调用-多轮迭代查询",
+  "version": "v1.0",
+  "priority": "P1",
+  "scenario": "多轮工具使用",
+  "dimensions": [
+    "D4.选择准确度",
+    "D7.多轮对话"
+  ],
+  "tags": [
+    "工具",
+    "多轮",
+    "benchmark"
+  ],
+  "conversation": [
+    {
+      "turn": 1,
+      "user": "帮我查一下从北京到上海的高铁，明天出发。",
+      "expect": "调用交通查询工具，返回高铁班次信息"
+    },
+    {
+      "turn": 2,
+      "user": "有没有下午出发的？最好是二等座。",
+      "expect": "基于前一轮查询结果，按时间筛选下午出发、二等座的高铁"
+    },
+    {
+      "turn": 3,
+      "user": "就这趟吧，帮我记下来，我出发前提醒我。",
+      "expect": "确认用户选择，调用提醒工具设置出发提醒"
+    }
+  ],
+  "evaluation": {
+    "method": "llm_judge",
+    "template": "工具使用评估",
+    "params": {
+      "expected_tool": "交通查询 + 日程提醒工具",
+      "expected_info": "三轮逐步细化：第一轮查高铁，第二轮按时间和座位筛选，第三轮确认并设置提醒",
+      "forbidden_content": [
+        "忘记前一轮筛选条件"
+      ]
+    },
+    "threshold": 4
+  },
+  "trace": {
+    "retrieved_memories": [
+      "用户经常往返北京和上海。"
+    ]
+  },
+  "golden": {
+    "annotator": "benchmark",
+    "annotated_at": "2026-08-25",
+    "expected_answer": "第一轮返回高铁班次，第二轮基于前一轮结果筛选下午+二等座，第三轮确认选择并调用提醒工具设置出发提醒，多轮工具调用上下文连贯",
+    "key_points": [
+      "逐步细化查询",
+      "记住筛选条件",
+      "工具调用链连贯",
+      "确认设置提醒"
+    ],
+    "overall_score": 5,
+    "dimension_scores": {
+      "D4.选择准确度": 5,
+      "D7.多轮对话": 5
+    }
+  }
+}

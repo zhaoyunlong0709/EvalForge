@@ -22,7 +22,8 @@ class ConsoleReporter:
     """终端报告输出"""
 
     def generate(self, cases: list[EvaluableCase], aggregated: dict,
-                 cost_summary: dict | None = None, snapshot: dict | None = None) -> str:
+                 cost_summary: dict | None = None, snapshot: dict | None = None,
+                 baseline_comparison: dict | None = None) -> str:
         """生成终端报告文本。"""
         lines: list[str] = []
         w = lines.append
@@ -97,5 +98,36 @@ class ConsoleReporter:
             w(f"  Agent: {snapshot.get('agent', {}).get('endpoint', '')}")
             w(f"  Judge: {snapshot.get('judge', {}).get('model', '')}")
 
+        # 基线对比摘要（每次报告必含）
+        w("")
+        w("Baseline 对比:")
+        w(f"  {self._baseline_summary_line(baseline_comparison)}")
+
         w("=" * 64)
         return "\n".join(lines)
+
+    @staticmethod
+    def _baseline_summary_line(baseline: dict | None) -> str:
+        """一句话基线对比摘要。"""
+        if not baseline:
+            return "首次评测，无历史基线可比"
+        overall = baseline.get("overall", {})
+        version = baseline.get("baseline_version", "?")
+        b_rate = overall.get("baseline_pass_rate", 0)
+        c_rate = overall.get("current_pass_rate", 0)
+        change = overall.get("change", 0)
+        regressions = baseline.get("regressions", [])
+
+        if change > 0:
+            mark = "✅"
+            extra = f"，但有 {len(regressions)} 个 case 退化" if regressions else ""
+            return (f"{mark} vs {version}: 通过率 当前 {c_rate:.1%} vs baseline {b_rate:.1%} "
+                    f"（{change:+.1%}）{extra}")
+        if change < 0:
+            mark = "⚠️"
+            return (f"{mark} vs {version}: 通过率 当前 {c_rate:.1%} vs baseline {b_rate:.1%} "
+                    f"（{change:+.1%}），{len(regressions)} 个退化")
+        mark = "➡️"
+        extra = f"，但有 {len(regressions)} 个 case 退化" if regressions else ""
+        return (f"{mark} vs {version}: 通过率 当前 {c_rate:.1%} vs baseline {b_rate:.1%} "
+                f"，与基线持平{extra}")

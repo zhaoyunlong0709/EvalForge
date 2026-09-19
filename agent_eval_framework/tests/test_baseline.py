@@ -5,6 +5,7 @@ import pytest
 
 from eval_core.models import AgentCase
 from eval_core.result import BaselineManager, ResultAggregator
+from eval_core.cli.main import _check_baseline_save
 
 
 def _make_case(case_id: str, passed: bool, priority: str = "P1",
@@ -167,8 +168,10 @@ class TestCompare:
         agg_v2 = ResultAggregator.aggregate(cases_v2)
 
         result = manager.compare(agg_v2, cases_v2)
-        assert result["new_cases"] == ["C003"]
-        assert result["removed_cases"] == ["C002"]
+        assert result["new_cases"][0]["case_id"] == "C003"
+        assert result["new_cases"][0]["current_passed"] is True
+        assert result["removed_cases"][0]["case_id"] == "C002"
+        assert result["removed_cases"][0]["baseline_passed"] is True
 
     def test_compare_by_priority(self, manager):
         """按优先级对比。"""
@@ -229,3 +232,163 @@ class TestCompare:
         assert result["overall"]["direction"] == "unchanged"
         assert result["regressions"] == []
         assert result["fixes"] == []
+        assert result["score_changes"] == []
+
+    def test_save_stores_avg_score(self, manager):
+        """save 存储整体平均分和维度平均分。"""
+        c1 = _make_case("C001", True)
+        c1.result.score = 5.0
+        c1.result.dimension_scores = {"D9.记忆召回": 5.0}
+        c2 = _make_case("C002", True)
+        c2.result.score = 3.0
+        c2.result.dimension_scores = {"D9.记忆召回": 3.0}
+        cases = [c1, c2]
+
+        manager.save("v0.1", ResultAggregator.aggregate(cases), cases)
+        loaded = manager.load("v0.1")
+
+        assert loaded["summary"]["avg_score"] == 4.0
+        assert loaded["summary"]["dimension_avg_score"]["D9.记忆召回"] == 4.0
+        assert loaded["case_results"]["C001"]["dimension_scores"] == {"D9.记忆召回": 5.0}
+
+    def test_compare_avg_score(self, manager):
+        """整体平均分对比。"""
+        cases_v1 = [_make_case("C001", True), _make_case("C002", True)]
+        for c in cases_v1:
+            c.result.score = 4.0
+            c.result.dimension_scores = {"D9.记忆召回": 4.0}
+        manager.save("v0.1", ResultAggregator.aggregate(cases_v1), cases_v1)
+
+        cases_v2 = [_make_case("C001", True), _make_case("C002", True)]
+        for c in cases_v2:
+            c.result.score = 5.0
+            c.result.dimension_scores = {"D9.记忆召回": 5.0}
+        agg_v2 = ResultAggregator.aggregate(cases_v2)
+
+        result = manager.compare(agg_v2, cases_v2)
+        assert result["overall"]["baseline_avg_score"] == 4.0
+        assert result["overall"]["current_avg_score"] == 5.0
+        assert result["overall"]["avg_score_change"] == 1.0
+        assert result["overall"]["avg_score_direction"] == "improved"
+
+    def test_compare_dimension_avg_score(self, manager):
+        """按维度平均分对比。"""
+        cases_v1 = [_make_case("C001", True)]
+        cases_v1[0].result.dimension_scores = {"D9.记忆召回": 3.0}
+        manager.save("v0.1", ResultAggregator.aggregate(cases_v1), cases_v1)
+
+        cases_v2 = [_make_case("C001", True)]
+        cases_v2[0].result.dimension_scores = {"D9.记忆召回": 5.0}
+        agg_v2 = ResultAggregator.aggregate(cases_v2)
+
+        result = manager.compare(agg_v2, cases_v2)
+        assert result["dimension_avg_score"]["D9.记忆召回"]["baseline"] == 3.0
+        assert result["dimension_avg_score"]["D9.记忆召回"]["current"] == 5.0
+        assert result["dimension_avg_score"]["D9.记忆召回"]["direction"] == "improved"
+
+    def test_compare_old_baseline_no_avg_score(self, manager):
+        """旧 baseline（无 avg_score/dimension_avg_score）优雅降级。"""
+        cases_v1 = [_make_case("C001", True)]
+        manager.save("v0.1", ResultAggregator.aggregate(cases_v1), cases_v1)
+        # 模拟旧格式：删除新增字段
+        old = manager.load("v0.1")
+        del old["summary"]["avg_score"]
+        del old["summary"]["dimension_avg_score"]
+        for c in old["case_results"].values():
+            c.pop("dimension_scores", None)
+        import json as _json
+        (manager.baselines_dir / "v0.1.json").write_text(
+            _json.dumps(old, ensure_ascii=False), encoding="utf-8")
+
+        cases_v2 = [_make_case("C001", True)]
+        agg_v2 = ResultAggregator.aggregate(cases_v2)
+        result = manager.compare(agg_v2, cases_v2)
+
+        assert result["overall"]["baseline_avg_score"] is None
+        assert result["overall"]["avg_score_direction"] == "unknown"
+        assert result["dimension_avg_score"] == {}
+
+    def test_detect_score_changes(self, manager):
+        """检测分数变化 case：通过状态不变但分数变化。"""
+        cases_v1 = [_make_case("C001", True), _make_case("C002", True)]
+        cases_v1[0].result.score = 4.0
+        cases_v1[1].result.score = 5.0
+        manager.save("v0.1", ResultAggregator.aggregate(cases_v1), cases_v1)
+
+        # C001 分数 4 -> 5（仍通过）；C002 不变
+        cases_v2 = [_make_case("C001", True), _make_case("C002", True)]
+        cases_v2[0].result.score = 5.0
+        cases_v2[1].result.score = 5.0
+        agg_v2 = ResultAggregator.aggregate(cases_v2)
+
+        result = manager.compare(agg_v2, cases_v2)
+        changes = result["score_changes"]
+        assert len(changes) == 1
+        assert changes[0]["case_id"] == "C001"
+        assert changes[0]["baseline_score"] == 4.0
+        assert changes[0]["current_score"] == 5.0
+        assert changes[0]["change"] == 1.0
+
+
+class TestBaselineSaveGuard:
+    """保存 baseline 前的退化防护检查。"""
+
+    def test_no_comparison_allows_save(self):
+        """无 baseline 对比数据（首次保存）→ 允许保存。"""
+        assert _check_baseline_save(None) is None
+
+    def test_no_degradation_allows_save(self):
+        """无退化 → 允许保存。"""
+        comparison = {
+            "overall": {"direction": "improved",
+                        "baseline_pass_rate": 0.9, "current_pass_rate": 0.95},
+            "regressions": [],
+        }
+        assert _check_baseline_save(comparison) is None
+
+    def test_overall_degraded_blocks(self):
+        """整体通过率下降 → 阻塞。"""
+        comparison = {
+            "overall": {"direction": "degraded",
+                        "baseline_pass_rate": 0.95, "current_pass_rate": 0.85},
+            "regressions": [],
+        }
+        reason = _check_baseline_save(comparison)
+        assert "整体通过率下降" in reason
+        assert "95.0%" in reason and "85.0%" in reason
+
+    def test_p0_failure_blocks(self):
+        """当前存在 P0 失败 → 阻塞（安全红线，与 baseline 无关）。"""
+        comparison = {
+            "overall": {"direction": "improved",
+                        "baseline_pass_rate": 0.85, "current_pass_rate": 0.95},
+            "regressions": [],
+        }
+        aggregated = {
+            "failures": [{"case_id": "B018", "priority": "P0"}],
+        }
+        reason = _check_baseline_save(comparison, aggregated)
+        assert "P0 用例失败" in reason
+        assert "B018" in reason
+
+    def test_p1_failure_blocks(self):
+        """当前存在 P1 失败 → 阻塞（基本功能，与 baseline 无关）。"""
+        aggregated = {
+            "failures": [{"case_id": "B019", "priority": "P1"}],
+        }
+        reason = _check_baseline_save(None, aggregated)
+        assert "P1 用例失败" in reason
+        assert "B019" in reason
+
+    def test_non_critical_regression_blocks(self):
+        """非 P0/P1（P2/P3）退化 → 阻塞。"""
+        comparison = {
+            "overall": {"direction": "unchanged",
+                        "baseline_pass_rate": 0.95, "current_pass_rate": 0.95},
+            "regressions": [
+                {"case_id": "B020", "priority": "P2"},
+            ],
+        }
+        reason = _check_baseline_save(comparison)
+        assert "非 P0/P1 用例退化" in reason
+        assert "B020" in reason

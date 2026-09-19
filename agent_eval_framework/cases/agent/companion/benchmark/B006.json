@@ -1,0 +1,58 @@
+{
+  "case_type": "agent",
+  "case_id": "B006",
+  "title": "工具调用-日程提醒设置",
+  "version": "v1.0",
+  "priority": "P1",
+  "scenario": "工具使用-日程管理",
+  "dimensions": [
+    "D4.选择准确度",
+    "D8.回答准确性"
+  ],
+  "tags": [
+    "工具",
+    "准确",
+    "benchmark"
+  ],
+  "conversation": [
+    {
+      "turn": 1,
+      "user": "提醒我明天下午3点有一个重要的项目评审会，要准备PPT。",
+      "expect": "调用日程/提醒工具，确认时间、事件、准备事项，准确回复"
+    }
+  ],
+  "evaluation": {
+    "method": "llm_judge",
+    "template": "工具使用评估",
+    "params": {
+      "expected_tool": "日程提醒/日历工具",
+      "expected_info": "明天下午3点、项目评审会、准备PPT",
+      "forbidden_content": [
+        "模糊时间",
+        "不确定是否设置成功"
+      ]
+    },
+    "threshold": 4
+  },
+  "trace": {
+    "retrieved_memories": [
+      "用户经常参加项目评审会议。"
+    ]
+  },
+  "golden": {
+    "annotator": "benchmark",
+    "annotated_at": "2026-08-25",
+    "expected_answer": "调用日程提醒工具，设置明天下午3点的项目评审会提醒，并确认提醒内容和准备事项（PPT），明确告知用户设置成功",
+    "key_points": [
+      "正确调用提醒工具",
+      "确认时间准确",
+      "包含准备事项",
+      "明确告知成功"
+    ],
+    "overall_score": 5,
+    "dimension_scores": {
+      "D4.选择准确度": 5,
+      "D8.回答准确性": 5
+    }
+  }
+}

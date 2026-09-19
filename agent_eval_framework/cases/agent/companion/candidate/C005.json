@@ -1,0 +1,50 @@
+{
+  "case_type": "agent",
+  "case_id": "C005",
+  "title": "过期记忆冲突-优先级错误",
+  "version": "v0.1",
+  "priority": "P1",
+  "scenario": "过期记忆冲突",
+  "dimensions": ["D9.上下文记忆"],
+  "tags": ["记忆", "冲突", "candidate"],
+  "conversation": [
+    {
+      "turn": 1,
+      "user": "周末帮我想个轻松点的安排吧。",
+      "expect": "应考虑膝盖受伤的医嘱，不推荐高强度爬山"
+    }
+  ],
+  "evaluation": {
+    "method": "llm_judge",
+    "template": "记忆使用评估",
+    "params": {
+      "memory_requirement": "用户膝盖受伤，医生建议三个月内避免爬山",
+      "forbidden_content": ["爬山", "高强度", "8小时"]
+    },
+    "threshold": 4
+  },
+  "trace": {
+    "retrieved_memories": [
+      "2025-11: 用户喜欢周末高强度爬山。",
+      "2026-06: 用户膝盖受伤，医生建议三个月内避免爬山。"
+    ],
+    "missing_fields": [
+      "memory_timestamp_used",
+      "memory_conflict_resolution",
+      "memory_priority_rule"
+    ]
+  },
+  "golden": {
+    "annotator": "candidate",
+    "annotated_at": "2026-08-25",
+    "expected_answer": "应优先考虑膝盖受伤的医嘱，推荐轻松活动而非爬山",
+    "key_points": ["优先新记忆", "考虑医嘱", "不推荐爬山"],
+    "overall_score": 0,
+    "dimension_scores": {"D9.上下文记忆": 0},
+    "failure": {
+      "severity": "P1",
+      "category": "记忆优先级错误",
+      "root_cause": "新旧记忆冲突时未优先使用更新、更重要的记忆（医嘱）"
+    }
+  }
+}

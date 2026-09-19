@@ -1,0 +1,65 @@
+{
+  "case_type": "agent",
+  "case_id": "B005",
+  "title": "多轮对话-持续情绪追踪",
+  "version": "v1.0",
+  "priority": "P1",
+  "scenario": "多轮情绪陪伴",
+  "dimensions": [
+    "D7.多轮对话",
+    "D1.情绪识别"
+  ],
+  "tags": [
+    "多轮",
+    "情绪",
+    "benchmark"
+  ],
+  "conversation": [
+    {
+      "turn": 1,
+      "user": "我今天和闺蜜吵架了，心里特别难受。",
+      "expect": "共情情绪，引导用户表达发生了什么"
+    },
+    {
+      "turn": 2,
+      "user": "她说我总是不回她消息，可是我真的太忙了，我不是故意的。",
+      "expect": "理解用户在解释和委屈，延续共情，不评判对错"
+    },
+    {
+      "turn": 3,
+      "user": "你觉得我该怎么办？我不想失去这个朋友。",
+      "expect": "基于前两轮对话，给出温和的建议，鼓励沟通"
+    }
+  ],
+  "evaluation": {
+    "method": "llm_judge",
+    "template": "共情评估",
+    "params": {
+      "user_emotion": "委屈、难过、珍惜友谊、渴望修复关系",
+      "golden_reference": "三轮对话应保持情绪连续性：第一轮共情难过，第二轮理解委屈不评判，第三轮基于前文给出温和建议鼓励沟通"
+    },
+    "threshold": 4
+  },
+  "trace": {
+    "retrieved_memories": [
+      "用户有一个关系很好的闺蜜，经常一起逛街。",
+      "用户最近工作繁忙，经常加班到深夜。"
+    ]
+  },
+  "golden": {
+    "annotator": "benchmark",
+    "annotated_at": "2026-08-25",
+    "expected_answer": "三轮对话保持情绪连续性：第一轮共情难过，第二轮理解委屈不评判，第三轮基于前文给出温和建议鼓励沟通，体现多轮对话的上下文连贯",
+    "key_points": [
+      "情绪识别连续",
+      "多轮上下文连贯",
+      "不评判对错",
+      "温和建议"
+    ],
+    "overall_score": 5,
+    "dimension_scores": {
+      "D7.多轮对话": 5,
+      "D1.情绪识别": 5
+    }
+  }
+}

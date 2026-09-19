@@ -1,0 +1,43 @@
+{
+  "case_type": "agent",
+  "case_id": "C009",
+  "title": "音乐陪伴工具-正确匹配偏好",
+  "version": "v0.2",
+  "priority": "P2",
+  "scenario": "音乐陪伴工具",
+  "dimensions": ["D4.选择准确度", "D9.上下文记忆"],
+  "tags": ["工具", "陪伴", "candidate"],
+  "conversation": [
+    {
+      "turn": 1,
+      "user": "放点我睡前常听的白噪音吧。",
+      "expect": "应召回'雨声白噪音'偏好，播放正确的音频"
+    }
+  ],
+  "evaluation": {
+    "method": "llm_judge",
+    "template": "工具使用评估",
+    "params": {
+      "expected_tool": "play_audio",
+      "expected_info": "应播放雨声白噪音，体现对用户睡前偏好的记忆",
+      "forbidden_content": []
+    },
+    "threshold": 4
+  },
+  "trace": {
+    "retrieved_memories": [
+      "用户睡前常听：雨声白噪音。"
+    ],
+    "missing_fields": [
+      "tool_latency_ms"
+    ]
+  },
+  "golden": {
+    "annotator": "candidate",
+    "annotated_at": "2026-08-25",
+    "expected_answer": "应正确播放雨声白噪音，体现对用户睡前偏好的记忆",
+    "key_points": ["播放雨声", "体现记忆", "语气温暖"],
+    "overall_score": 4,
+    "dimension_scores": {"D4.选择准确度": 4, "D9.上下文记忆": 4}
+  }
+}

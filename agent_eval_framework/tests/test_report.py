@@ -48,6 +48,32 @@ class TestConsoleReporter:
         assert "成本" in text
         assert "可复现性快照" in text
 
+    def test_baseline_summary_line(self):
+        """console 报告包含基线对比摘要（首次评测）。"""
+        cases = _sample_cases()
+        agg = ResultAggregator.aggregate(cases)
+        text = ConsoleReporter().generate(cases, agg, baseline_comparison=None)
+        assert "Baseline 对比" in text
+        assert "首次评测" in text
+
+    def test_baseline_summary_line_improved(self):
+        """console 报告包含基线对比摘要（有基线）。"""
+        cases = _sample_cases()
+        agg = ResultAggregator.aggregate(cases)
+        baseline = {
+            "baseline_version": "v0.2",
+            "overall": {
+                "baseline_pass_rate": 0.5,
+                "current_pass_rate": 0.6,
+                "change": 0.1,
+                "direction": "improved",
+            },
+            "regressions": [],
+        }
+        text = ConsoleReporter().generate(cases, agg, baseline_comparison=baseline)
+        assert "vs v0.2" in text
+        assert "50.0%" in text and "60.0%" in text
+
 
 class TestJSONReporter:
     def test_generate_to_file(self, tmp_path):

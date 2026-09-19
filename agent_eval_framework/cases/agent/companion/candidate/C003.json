@@ -1,0 +1,46 @@
+{
+  "case_type": "agent",
+  "case_id": "C003",
+  "title": "纪念日陪伴-记忆召回失败",
+  "version": "v0.1",
+  "priority": "P1",
+  "scenario": "纪念日陪伴",
+  "dimensions": ["D9.上下文记忆"],
+  "tags": ["记忆", "纪念日", "candidate"],
+  "conversation": [
+    {
+      "turn": 1,
+      "user": "今天是什么日子你还记得吗？",
+      "expect": "应召回纪念日记忆，给出有意义的回应"
+    }
+  ],
+  "evaluation": {
+    "method": "llm_judge",
+    "template": "记忆使用评估",
+    "params": {
+      "memory_requirement": "用户和伴侣的周年纪念日是7月6日，用户很重视",
+      "forbidden_content": ["普通的一天", "没什么特别"]
+    },
+    "threshold": 4
+  },
+  "trace": {
+    "missing_fields": [
+      "memory_retrieval_query",
+      "memory_candidate_count",
+      "retrieval_score_threshold"
+    ]
+  },
+  "golden": {
+    "annotator": "candidate",
+    "annotated_at": "2026-08-25",
+    "expected_answer": "应召回周年纪念日记忆，给出有意义的祝福或陪伴回应",
+    "key_points": ["召回纪念日", "有意义回应", "不敷衍"],
+    "overall_score": 0,
+    "dimension_scores": {"D9.上下文记忆": 0},
+    "failure": {
+      "severity": "P1",
+      "category": "记忆召回失败",
+      "root_cause": "记忆库存在周年纪念日记录，但召回为空，检索环节疑似失败"
+    }
+  }
+}

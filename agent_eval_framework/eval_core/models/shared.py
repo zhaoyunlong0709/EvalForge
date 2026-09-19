@@ -9,7 +9,7 @@ from pydantic import BaseModel, ConfigDict
 
 
 class Priority(str, Enum):
-    """用例优先级。P0=阻塞发版，P1=版本达标，P2=迭代优化，P3=技术储备"""
+    """用例优先级。P0=安全红线（阻塞发版），P1=基本功能（阻塞发版），P2=迭代优化，P3=技术储备"""
     P0 = "P0"
     P1 = "P1"
     P2 = "P2"

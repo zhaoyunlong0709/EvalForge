@@ -78,6 +78,10 @@ def cli() -> None:
     help="发版后保存本次结果为 baseline（如 --save-baseline v0.3）",
 )
 @click.option(
+    "--force", "force_save", is_flag=True,
+    help="保存 baseline 时忽略退化防护（明知更差仍强制保存）",
+)
+@click.option(
     "--baselines-dir", default="baselines", type=click.Path(file_okay=False, path_type=Path),
     help="baseline 存储目录（默认 baselines/）",
 )
@@ -93,7 +97,8 @@ def cli() -> None:
 def run(
     case_files, case_dirs, tags, priorities, dimensions,
     config_path, cases_dir, profiles_dir, report_dir,
-    pass_k, pass_threshold, concurrency, save_baseline, baselines_dir, dry_run, log_level,
+    pass_k, pass_threshold, concurrency, save_baseline, force_save, baselines_dir,
+    dry_run, log_level,
     mock_mode,
 ) -> None:
     """运行评测：加载用例 -> 执行 -> 评测 -> 报告"""
@@ -114,6 +119,7 @@ def run(
                 pass_threshold=pass_threshold,
                 concurrency=concurrency,
                 save_baseline=save_baseline,
+                force_save=force_save,
                 baselines_dir=baselines_dir,
                 dry_run=dry_run,
                 mock_mode=mock_mode,
@@ -130,7 +136,8 @@ async def _run(
     case_files, case_dirs, tags, priorities, dimensions,
     config_path: Path, cases_dir: Path, profiles_dir: Path, report_dir: Path,
     pass_k: int = 1, pass_threshold: int = 1, concurrency: int = 1,
-    save_baseline: str | None = None, baselines_dir: Path | None = None,
+    save_baseline: str | None = None, force_save: bool = False,
+    baselines_dir: Path | None = None,
     dry_run: bool = False, mock_mode: bool = False,
 ) -> int:
     """执行完整评测流程，返回退出码（0=全部通过，1=有失败）。"""
@@ -336,11 +343,18 @@ async def _run(
                 for r in baseline_comparison["regressions"]:
                     logger.warning(f"  退化: {r['case_id']} - {r['error']}")
 
-    # ---- 6.6 保存 Baseline（发版时） ----
+    # ---- 6.6 保存 Baseline（发版时，手动触发 + 退化防护） ----
     if save_baseline and baselines_dir:
         from eval_core.result import BaselineManager
         bm = BaselineManager(baselines_dir)
-        bm.save(save_baseline, aggregated, results)
+        block_reason = _check_baseline_save(baseline_comparison, aggregated)
+        if block_reason and not force_save:
+            logger.error(f"拒绝保存 baseline ({save_baseline}): {block_reason}")
+            logger.error("如需强制保存，请加 --force")
+        else:
+            if block_reason:
+                logger.warning(f"⚠️ 检测到阻塞原因但 --force 生效，强制保存: {block_reason}")
+            bm.save(save_baseline, aggregated, results)
 
     builder = ReportBuilder(report_dir)
     json_path = builder.generate_all(
@@ -353,6 +367,57 @@ async def _run(
 
     # ---- 7. 退出码 ----
     return 1 if aggregated["total"]["failed"] > 0 else 0
+
+
+def _check_baseline_save(
+    baseline_comparison: dict | None = None,
+    aggregated: dict | None = None,
+) -> str | None:
+    """保存 baseline 前的防护检查。
+
+    两层检查：
+      1. 绝对红线：当前运行存在 P0/P1 失败（与 baseline 无关）
+         P0=安全红线，P1=基本功能，两者都是阻塞发版点
+      2. 相对退化：整体通过率下降 / 非 P0/P1 case 退化（需 baseline 对比数据）
+
+    Returns:
+        阻塞原因（None = 允许保存）。
+    """
+    reasons: list[str] = []
+
+    # 1. 绝对红线：当前 P0/P1 失败（永远禁止存为 baseline，与 baseline 无关）
+    if aggregated:
+        failures = aggregated.get("failures", [])
+        p0_failures = [f for f in failures if f.get("priority") == "P0"]
+        p1_failures = [f for f in failures if f.get("priority") == "P1"]
+        if p0_failures:
+            ids = ", ".join(f["case_id"] for f in p0_failures)
+            reasons.append(f"P0 用例失败（安全红线，阻塞发版）: {ids}")
+        if p1_failures:
+            ids = ", ".join(f["case_id"] for f in p1_failures)
+            reasons.append(f"P1 用例失败（基本功能，阻塞发版）: {ids}")
+
+    # 2. 相对退化（需 baseline 对比数据）
+    if baseline_comparison:
+        overall = baseline_comparison.get("overall", {})
+        if overall.get("direction") == "degraded":
+            reasons.append(
+                f"整体通过率下降 "
+                f"{overall.get('baseline_pass_rate', 0):.1%} -> "
+                f"{overall.get('current_pass_rate', 0):.1%}"
+            )
+
+        regressions = baseline_comparison.get("regressions", [])
+        non_critical_regressions = [
+            r for r in regressions if r.get("priority") not in ("P0", "P1")
+        ]
+        if non_critical_regressions:
+            ids = ", ".join(r["case_id"] for r in non_critical_regressions)
+            reasons.append(f"非 P0/P1 用例退化: {ids}")
+
+    if not reasons:
+        return None
+    return "；".join(reasons)
 
 
 

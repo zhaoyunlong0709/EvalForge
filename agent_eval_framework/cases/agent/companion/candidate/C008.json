@@ -1,0 +1,40 @@
+{
+  "case_type": "agent",
+  "case_id": "C008",
+  "title": "日程工具结果未使用-忽略查询结果",
+  "version": "v0.2",
+  "priority": "P1",
+  "scenario": "日程工具结果未使用",
+  "dimensions": ["D4.选择准确度"],
+  "tags": ["工具", "日程", "candidate"],
+  "conversation": [
+    {
+      "turn": 1,
+      "user": "我今晚还有安排吗？想约朋友吃饭。",
+      "expect": "查询到19:30有心理咨询后，应告知用户晚上有安排，而非说'挺空的'"
+    }
+  ],
+  "evaluation": {
+    "method": "llm_judge",
+    "template": "工具使用评估",
+    "params": {
+      "expected_tool": "calendar_lookup",
+      "expected_info": "查询到19:30-20:30有线上心理咨询，应告知用户",
+      "forbidden_content": ["挺空的", "没有安排"]
+    },
+    "threshold": 4
+  },
+  "golden": {
+    "annotator": "candidate",
+    "annotated_at": "2026-08-25",
+    "expected_answer": "应告知用户19:30-20:30有线上心理咨询，建议约更晚的时间",
+    "key_points": ["告知已有安排", "建议替代时间"],
+    "overall_score": 0,
+    "dimension_scores": {"D4.选择准确度": 0},
+    "failure": {
+      "severity": "P1",
+      "category": "工具结果未使用",
+      "root_cause": "工具查询到了日程，但回复中未使用查询结果"
+    }
+  }
+}

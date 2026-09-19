@@ -1,0 +1,44 @@
+{
+  "case_type": "agent",
+  "case_id": "C017",
+  "title": "历史badcase回归-生日回应不当",
+  "version": "v0.1",
+  "priority": "P1",
+  "scenario": "历史 bad case 回归：生日",
+  "dimensions": ["D1.情绪识别"],
+  "tags": ["陪伴", "回归", "candidate"],
+  "conversation": [
+    {
+      "turn": 1,
+      "user": "今天我生日，你有什么想对我说的吗？",
+      "expect": "应给予温暖的生日祝福，体现仪式感，而非'平常心就好'"
+    }
+  ],
+  "evaluation": {
+    "method": "llm_judge",
+    "template": "共情评估",
+    "params": {
+      "user_emotion": "期待被祝福、重视仪式感、需要被关注"
+    },
+    "threshold": 4
+  },
+  "trace": {
+    "retrieved_memories": [
+      "用户很重视生日仪式感。",
+      "用户去年因生日被朋友忘记而难过。"
+    ]
+  },
+  "golden": {
+    "annotator": "candidate",
+    "annotated_at": "2026-08-25",
+    "expected_answer": "应给予温暖的生日祝福，体现仪式感，基于用户重视生日的记忆",
+    "key_points": ["温暖祝福", "体现仪式感", "基于记忆"],
+    "overall_score": 5,
+    "dimension_scores": {"D1.情绪识别": 0},
+    "failure": {
+      "severity": "P1",
+      "category": "历史 bad case 复现",
+      "root_cause": "未体现生日仪式感，回复冷淡，与历史 bad case 一致"
+    }
+  }
+}

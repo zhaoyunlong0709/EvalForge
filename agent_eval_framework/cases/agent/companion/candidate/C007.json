@@ -1,0 +1,45 @@
+{
+  "case_type": "agent",
+  "case_id": "C007",
+  "title": "天气工具兜底-失败时不应肯定回复",
+  "version": "v0.1",
+  "priority": "P1",
+  "scenario": "天气工具兜底",
+  "dimensions": ["D4.选择准确度", "D8.回答准确性"],
+  "tags": ["工具", "兜底", "candidate"],
+  "conversation": [
+    {
+      "turn": 1,
+      "user": "我现在要不要带伞出门？",
+      "expect": "工具调用失败时应告知用户无法获取天气，不应给出肯定答案"
+    }
+  ],
+  "evaluation": {
+    "method": "llm_judge",
+    "template": "工具使用评估",
+    "params": {
+      "expected_tool": "get_weather",
+      "expected_info": "工具失败时应如实告知用户，不应肯定地说'不会下雨'",
+      "forbidden_content": ["不会下雨", "不用带"]
+    },
+    "threshold": 4
+  },
+  "trace": {
+    "retrieved_memories": [
+      "用户通勤需要步行 15 分钟。"
+    ]
+  },
+  "golden": {
+    "annotator": "candidate",
+    "annotated_at": "2026-08-25",
+    "expected_answer": "工具调用失败时应告知用户无法获取天气，不应给出肯定答案",
+    "key_points": ["告知工具失败", "不肯定回复", "建议谨慎"],
+    "overall_score": 0,
+    "dimension_scores": {"D4.选择准确度": 0, "D8.回答准确性": 0},
+    "failure": {
+      "severity": "P1",
+      "category": "工具兜底失败",
+      "root_cause": "工具调用失败后仍给出了肯定性回答，未做兜底处理"
+    }
+  }
+}

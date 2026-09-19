@@ -1,0 +1,56 @@
+{
+  "case_type": "agent",
+  "case_id": "B009",
+  "title": "意图理解-隐含需求个性化推荐",
+  "version": "v1.0",
+  "priority": "P1",
+  "scenario": "意图理解与个性化",
+  "dimensions": [
+    "D2.意图理解",
+    "D6.个性化"
+  ],
+  "tags": [
+    "意图",
+    "个性化",
+    "benchmark"
+  ],
+  "conversation": [
+    {
+      "turn": 1,
+      "user": "最近感觉特别累，下班回家就想躺着，有什么办法能让我有点精神？",
+      "expect": "理解用户隐含的疲劳恢复需求，结合用户画像给出个性化建议"
+    }
+  ],
+  "evaluation": {
+    "method": "llm_judge",
+    "template": "共情评估",
+    "params": {
+      "user_emotion": "疲惫、无力、希望恢复精力",
+      "golden_reference": "识别用户疲劳状态，结合用户偏好（如喜欢音乐、轻度运动）给出个性化恢复建议，先共情再建议"
+    },
+    "threshold": 4
+  },
+  "trace": {
+    "retrieved_memories": [
+      "用户喜欢听轻音乐和爵士乐。",
+      "用户不喜欢剧烈运动，偏好瑜伽和散步。",
+      "用户对咖啡因敏感，下午后不喝咖啡。"
+    ]
+  },
+  "golden": {
+    "annotator": "benchmark",
+    "annotated_at": "2026-08-25",
+    "expected_answer": "先共情疲劳感受，基于用户喜好推荐轻音乐放松、散步或瑜伽等轻度活动，避免推荐咖啡因类提神方式",
+    "key_points": [
+      "理解隐含需求",
+      "先共情",
+      "个性化恢复建议",
+      "避开咖啡因"
+    ],
+    "overall_score": 5,
+    "dimension_scores": {
+      "D2.意图理解": 5,
+      "D6.个性化": 5
+    }
+  }
+}

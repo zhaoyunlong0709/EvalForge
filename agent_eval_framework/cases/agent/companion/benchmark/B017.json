@@ -1,0 +1,61 @@
+{
+  "case_type": "agent",
+  "case_id": "B017",
+  "title": "综合-记忆驱动的情绪关怀",
+  "version": "v1.0",
+  "priority": "P1",
+  "scenario": "综合场景-记忆+情绪+共情",
+  "dimensions": [
+    "D9.上下文记忆",
+    "D1.情绪识别",
+    "D8.共情适当率"
+  ],
+  "tags": [
+    "记忆",
+    "情绪",
+    "共情",
+    "综合",
+    "benchmark"
+  ],
+  "conversation": [
+    {
+      "turn": 1,
+      "user": "今天是我妈忌日，我请了一天假在家。",
+      "expect": "识别悲伤情绪，结合记忆中的家庭信息，给出温暖不冒犯的回应"
+    }
+  ],
+  "evaluation": {
+    "method": "llm_judge",
+    "template": "共情评估",
+    "params": {
+      "user_emotion": "悲伤、思念、需要安静陪伴而非热闹安慰",
+      "golden_reference": "识别悲伤情绪，结合记忆中母亲已故的信息，给予温暖但不沉重的回应，表达陪伴而非说教"
+    },
+    "threshold": 4
+  },
+  "trace": {
+    "retrieved_memories": [
+      "用户母亲两年前因癌症去世。",
+      "用户每年忌日都会请假在家。",
+      "用户偏好安静陪伴，不喜欢被过度安慰。"
+    ]
+  },
+  "golden": {
+    "annotator": "benchmark",
+    "annotated_at": "2026-08-25",
+    "expected_answer": "识别悲伤情绪，结合记忆中母亲已故的信息，给予温暖但不沉重的回应，表达陪伴而非说教，不强行转移话题或过度安慰",
+    "key_points": [
+      "识别悲伤",
+      "结合记忆信息",
+      "温暖不沉重",
+      "表达陪伴",
+      "不强行转移话题"
+    ],
+    "overall_score": 5,
+    "dimension_scores": {
+      "D9.上下文记忆": 5,
+      "D1.情绪识别": 5,
+      "D8.共情适当率": 5
+    }
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "case_type": "agent",
+  "case_id": "C006",
+  "title": "设备提醒工具-时间解析错误",
+  "version": "v0.1",
+  "priority": "P1",
+  "scenario": "设备提醒工具",
+  "dimensions": ["D4.选择准确度"],
+  "tags": ["工具", "提醒", "candidate"],
+  "conversation": [
+    {
+      "turn": 1,
+      "user": "明早 8 点提醒我带工牌。",
+      "expect": "应正确解析'明早8点'为上午8:00，而非晚上20:00"
+    }
+  ],
+  "evaluation": {
+    "method": "llm_judge",
+    "template": "工具使用评估",
+    "params": {
+      "expected_tool": "create_reminder",
+      "expected_info": "提醒时间应为上午8:00，内容为带工牌",
+      "forbidden_content": ["20:00", "晚上8点"]
+    },
+    "threshold": 4
+  },
+  "golden": {
+    "annotator": "candidate",
+    "annotated_at": "2026-08-25",
+    "expected_answer": "应正确解析'明早8点'为上午8:00，设置正确的提醒时间",
+    "key_points": ["正确解析时间", "上午8点", "提醒内容正确"],
+    "overall_score": 0,
+    "dimension_scores": {"D4.选择准确度": 0},
+    "failure": {
+      "severity": "P1",
+      "category": "工具参数错误",
+      "root_cause": "时间解析错误，'明早8点'被解析为20:00"
+    }
+  }
+}

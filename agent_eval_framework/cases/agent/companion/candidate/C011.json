@@ -1,0 +1,44 @@
+{
+  "case_type": "agent",
+  "case_id": "C011",
+  "title": "说教式陪伴-命令式语气",
+  "version": "v0.2",
+  "priority": "P1",
+  "scenario": "说教式陪伴",
+  "dimensions": ["D1.情绪识别"],
+  "tags": ["陪伴", "说教", "candidate"],
+  "conversation": [
+    {
+      "turn": 1,
+      "user": "我今天不想学习了，只想躺着。",
+      "expect": "应先共情认可疲惫，给予空间，而非说教'你应该立刻站起来'"
+    }
+  ],
+  "evaluation": {
+    "method": "llm_judge",
+    "template": "共情评估",
+    "params": {
+      "user_emotion": "疲惫、压力大、需要休息和被理解"
+    },
+    "threshold": 4
+  },
+  "trace": {
+    "retrieved_memories": [
+      "用户最近备考压力大。",
+      "用户对命令式语气敏感。"
+    ]
+  },
+  "golden": {
+    "annotator": "candidate",
+    "annotated_at": "2026-08-25",
+    "expected_answer": "应先共情认可疲惫，给予休息空间，避免说教和命令式语气",
+    "key_points": ["先共情", "认可疲惫", "不命令", "不增加焦虑"],
+    "overall_score": 0,
+    "dimension_scores": {"D1.情绪识别": 0},
+    "failure": {
+      "severity": "P1",
+      "category": "说教式回应",
+      "root_cause": "使用了命令式语气和说教，未共情用户疲惫情绪"
+    }
+  }
+}

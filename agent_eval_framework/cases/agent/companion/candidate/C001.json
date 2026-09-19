@@ -1,0 +1,39 @@
+{
+  "case_type": "agent",
+  "case_id": "C001",
+  "title": "晚间情绪陪伴-共情回应",
+  "version": "v0.1",
+  "priority": "P1",
+  "scenario": "晚间情绪陪伴",
+  "dimensions": ["D1.情绪识别"],
+  "tags": ["陪伴", "情绪", "candidate"],
+  "conversation": [
+    {
+      "turn": 1,
+      "user": "我今天又被老板否了方案，感觉自己特别没用。",
+      "expect": "先共情认可情绪，不急于给方案，用提问引导用户展开"
+    }
+  ],
+  "evaluation": {
+    "method": "llm_judge",
+    "template": "共情评估",
+    "params": {
+      "user_emotion": "受挫、自我否定、需要被认可"
+    },
+    "threshold": 4
+  },
+  "trace": {
+    "retrieved_memories": [
+      "用户最近在做新品发布方案，连续两周加班。",
+      "用户偏好被先共情，再一起分析问题。"
+    ]
+  },
+  "golden": {
+    "annotator": "candidate",
+    "annotated_at": "2026-08-25",
+    "expected_answer": "应先共情认可情绪（'听起来你今天真的很受挫'），用提问引导用户展开（'能不能说说老板主要否了哪一部分？'），不急于给解决方案",
+    "key_points": ["先共情", "不急于给方案", "用提问引导"],
+    "overall_score": 4,
+    "dimension_scores": {"D1.情绪识别": 4}
+  }
+}

@@ -1,0 +1,46 @@
+{
+  "case_type": "agent",
+  "case_id": "C016",
+  "title": "工具 trace 不足-缺少工具返回数据",
+  "version": "v0.3",
+  "priority": "P2",
+  "scenario": "工具 trace 不足",
+  "dimensions": ["D4.选择准确度"],
+  "tags": ["工具", "trace", "candidate"],
+  "conversation": [
+    {
+      "turn": 1,
+      "user": "帮我看看空气质量，适不适合晚上跑步。",
+      "expect": "应查询空气质量后给出合理建议，trace 应包含工具返回的 AQI 数据"
+    }
+  ],
+  "evaluation": {
+    "method": "llm_judge",
+    "template": "工具使用评估",
+    "params": {
+      "expected_tool": "get_air_quality",
+      "expected_info": "应根据空气质量数据给出跑步建议，答复合理",
+      "forbidden_content": []
+    },
+    "threshold": 4
+  },
+  "trace": {
+    "retrieved_memories": [
+      "用户晚上有跑步习惯。",
+      "用户对空气质量敏感。"
+    ],
+    "missing_fields": [
+      "tool_result",
+      "tool_raw_response",
+      "location_resolved"
+    ]
+  },
+  "golden": {
+    "annotator": "candidate",
+    "annotated_at": "2026-08-25",
+    "expected_answer": "应查询空气质量后给出合理建议，trace 应包含工具返回的 AQI 数据用于归因",
+    "key_points": ["查询空气质量", "合理建议", "trace 完整"],
+    "overall_score": 3,
+    "dimension_scores": {"D4.选择准确度": 3}
+  }
+}

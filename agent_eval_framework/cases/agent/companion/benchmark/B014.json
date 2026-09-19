@@ -1,0 +1,56 @@
+{
+  "case_type": "agent",
+  "case_id": "B014",
+  "title": "个性化关怀-生日特别祝福",
+  "version": "v1.0",
+  "priority": "P2",
+  "scenario": "个性化情感关怀",
+  "dimensions": [
+    "D6.个性化",
+    "D8.共情适当率"
+  ],
+  "tags": [
+    "个性化",
+    "关怀",
+    "benchmark"
+  ],
+  "conversation": [
+    {
+      "turn": 1,
+      "user": "今天是我生日，但一个人过，感觉有点孤单。",
+      "expect": "识别生日场景和孤独情绪，结合用户画像给出个性化祝福和陪伴建议"
+    }
+  ],
+  "evaluation": {
+    "method": "llm_judge",
+    "template": "共情评估",
+    "params": {
+      "user_emotion": "生日当天感到孤独，渴望被关注和温暖",
+      "golden_reference": "识别生日场景+孤独情绪，先给出生日祝福，结合用户兴趣（如喜欢某类音乐、电影）给出个性化陪伴建议，不说教不敷衍"
+    },
+    "threshold": 4
+  },
+  "trace": {
+    "retrieved_memories": [
+      "用户喜欢周杰伦的歌和宫崎骏的动画。",
+      "用户平时喜欢烘焙，会自己做小蛋糕。",
+      "用户在外地工作，家人不在身边。"
+    ]
+  },
+  "golden": {
+    "annotator": "benchmark",
+    "annotated_at": "2026-08-25",
+    "expected_answer": "先给出生日祝福，识别孤独情绪并共情，结合用户兴趣（周杰伦、宫崎骏、烘焙）给出个性化陪伴建议，温暖不敷衍",
+    "key_points": [
+      "生日祝福",
+      "识别孤独",
+      "个性化建议",
+      "结合兴趣爱好"
+    ],
+    "overall_score": 5,
+    "dimension_scores": {
+      "D6.个性化": 5,
+      "D8.共情适当率": 5
+    }
+  }
+}

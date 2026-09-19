@@ -1,0 +1,59 @@
+{
+  "case_type": "agent",
+  "case_id": "B002",
+  "title": "意图理解-天气查询工具调用",
+  "version": "v1.0",
+  "priority": "P1",
+  "scenario": "日常工具使用",
+  "dimensions": [
+    "D2.意图理解",
+    "D4.选择准确度"
+  ],
+  "tags": [
+    "smoke",
+    "工具",
+    "意图",
+    "benchmark"
+  ],
+  "conversation": [
+    {
+      "turn": 1,
+      "user": "我明天要去杭州出差，帮我看看那边天气怎么样。",
+      "expect": "理解用户需要查询杭州明天天气，应调用天气工具并返回具体天气信息"
+    }
+  ],
+  "evaluation": {
+    "method": "llm_judge",
+    "template": "工具使用评估",
+    "params": {
+      "expected_tool": "天气查询工具",
+      "expected_info": "杭州明天的天气信息（温度、降水概率、风力）",
+      "forbidden_content": [
+        "模糊表述",
+        "不确定",
+        "可能"
+      ]
+    },
+    "threshold": 4
+  },
+  "trace": {
+    "retrieved_memories": [
+      "用户经常出差，目的地多为杭州、上海。"
+    ]
+  },
+  "golden": {
+    "annotator": "benchmark",
+    "annotated_at": "2026-08-25",
+    "expected_answer": "调用天气查询工具，返回杭州明天具体天气信息（温度、降水概率、风力），并给出出行建议",
+    "key_points": [
+      "正确调用天气工具",
+      "返回具体天气数据",
+      "给出出行建议"
+    ],
+    "overall_score": 5,
+    "dimension_scores": {
+      "D2.意图理解": 5,
+      "D4.选择准确度": 5
+    }
+  }
+}

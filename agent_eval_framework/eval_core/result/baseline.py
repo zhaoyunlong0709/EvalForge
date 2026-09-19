@@ -48,18 +48,24 @@ class BaselineManager:
         case_results: dict[str, dict] = {}
         for c in cases:
             case_results[c.case_id] = {
+                "title": c.title,
                 "passed": c.result.passed,
                 "score": c.result.score,
                 "priority": c.priority.value,
+                "dimension_scores": dict(getattr(c.result, "dimension_scores", {}) or {}),
             }
+
+        avg_score, dimension_avg_score = self._compute_avg_scores(cases)
 
         baseline = {
             "version": version,
             "saved_at": datetime.now().isoformat(),
             "summary": {
                 "total": aggregated["total"],
+                "avg_score": avg_score,
                 "by_priority": aggregated.get("by_priority", {}),
                 "by_dimension": aggregated.get("by_dimension", {}),
+                "dimension_avg_score": dimension_avg_score,
             },
             "case_results": case_results,
         }
@@ -103,6 +109,28 @@ class BaselineManager:
         """列出所有已保存的 baseline 版本号。"""
         return sorted(f.stem for f in self.baselines_dir.glob("*.json"))
 
+    @staticmethod
+    def _compute_avg_scores(cases: list[EvaluableCase]) -> tuple[float, dict[str, float]]:
+        """计算整体平均分 + 各维度平均分。
+
+        Returns:
+            (整体平均分, {维度: 平均分})
+        """
+        scores = [c.result.score for c in cases]
+        avg = round(sum(scores) / len(scores), 2) if scores else 0.0
+
+        dim_score_map: dict[str, list[float]] = {}
+        for c in cases:
+            dim_scores = getattr(c.result, "dimension_scores", {}) or {}
+            for dim, s in dim_scores.items():
+                dim_score_map.setdefault(dim, []).append(float(s))
+
+        dimension_avg = {
+            dim: round(sum(vals) / len(vals), 2)
+            for dim, vals in sorted(dim_score_map.items())
+        }
+        return avg, dimension_avg
+
     # ==================== 对比 ====================
 
     def compare(
@@ -132,22 +160,35 @@ class BaselineManager:
             "baseline_saved_at": baseline.get("saved_at", ""),
         }
 
-        # 1. 整体对比
+        baseline_summary = baseline.get("summary", {})
+
+        # 当前平均分 + 维度平均分
+        current_avg, current_dim_avg = self._compute_avg_scores(current_cases)
+
+        # 1. 整体对比（通过率 + 平均分）
         result["overall"] = self._compare_overall(
-            baseline.get("summary", {}).get("total", {}),
+            baseline_summary,
             current_aggregated.get("total", {}),
+            current_avg,
         )
 
-        # 2. 按优先级对比
+        # 2. 按优先级对比（通过率）
         result["by_priority"] = self._compare_sections(
-            baseline.get("summary", {}).get("by_priority", {}),
+            baseline_summary.get("by_priority", {}),
             current_aggregated.get("by_priority", {}),
         )
 
-        # 3. 按维度对比
+        # 3. 按维度对比（通过率）
         result["by_dimension"] = self._compare_sections(
-            baseline.get("summary", {}).get("by_dimension", {}),
+            baseline_summary.get("by_dimension", {}),
             current_aggregated.get("by_dimension", {}),
+        )
+
+        # 3.5 按维度对比（平均分）。旧 baseline 无此数据时返回空 dict
+        baseline_dim_avg = baseline_summary.get("dimension_avg_score")
+        result["dimension_avg_score"] = (
+            self._compare_dimension_scores(baseline_dim_avg, current_dim_avg)
+            if baseline_dim_avg is not None else {}
         )
 
         # 4. case 级对比
@@ -157,11 +198,21 @@ class BaselineManager:
 
         return result
 
-    def _compare_overall(self, baseline_total: dict, current_total: dict) -> dict:
-        """整体通过率对比。"""
+    def _compare_overall(
+        self,
+        baseline_summary: dict,
+        current_total: dict,
+        current_avg_score: float,
+    ) -> dict:
+        """整体通过率 + 平均分对比。"""
+        baseline_total = baseline_summary.get("total", {})
         b_rate = baseline_total.get("pass_rate", 0)
         c_rate = current_total.get("pass_rate", 0)
         change = round(c_rate - b_rate, 4)
+
+        b_avg = baseline_summary.get("avg_score")
+        avg_change = round(current_avg_score - b_avg, 2) if b_avg is not None else None
+
         return {
             "baseline_pass_rate": b_rate,
             "current_pass_rate": c_rate,
@@ -170,6 +221,13 @@ class BaselineManager:
             "change": change,
             "direction": "improved" if change > 0 else
                          "degraded" if change < 0 else "unchanged",
+            "baseline_avg_score": b_avg,
+            "current_avg_score": current_avg_score,
+            "avg_score_change": avg_change,
+            "avg_score_direction": (
+                "improved" if avg_change > 0 else
+                "degraded" if avg_change < 0 else "unchanged"
+            ) if avg_change is not None else "unknown",
         }
 
     def _compare_sections(self, baseline_section: dict, current_section: dict) -> dict:
@@ -205,21 +263,58 @@ class BaselineManager:
 
         return comparison
 
+    def _compare_dimension_scores(
+        self,
+        baseline_dim_avg: dict,
+        current_dim_avg: dict,
+    ) -> dict:
+        """按维度平均分对比（0-5 分值，而非通过率）。"""
+        comparison: dict[str, dict] = {}
+        all_dims = sorted(set(baseline_dim_avg) | set(current_dim_avg))
+
+        for dim in all_dims:
+            b = baseline_dim_avg.get(dim)
+            c = current_dim_avg.get(dim)
+            if b is not None and c is not None:
+                change = round(c - b, 2)
+                comparison[dim] = {
+                    "baseline": b,
+                    "current": c,
+                    "change": change,
+                    "direction": "improved" if change > 0 else
+                                 "degraded" if change < 0 else "unchanged",
+                }
+            elif b is not None:
+                comparison[dim] = {
+                    "baseline": b, "current": None,
+                    "change": None, "direction": "removed",
+                }
+            else:
+                comparison[dim] = {
+                    "baseline": None, "current": c,
+                    "change": None, "direction": "new",
+                }
+
+        return comparison
+
     def _compare_cases(
         self, baseline_cases: dict, current_cases: list[EvaluableCase]
     ) -> dict:
-        """case 级对比：退化 / 修复 / 新增 / 移除。"""
+        """case 级对比：退化 / 修复 / 分数变化 / 新增 / 移除。"""
         current_ids = {c.case_id for c in current_cases}
         baseline_ids = set(baseline_cases.keys())
 
         regressions: list[dict] = []
         fixes: list[dict] = []
+        score_changes: list[dict] = []
 
         for c in current_cases:
             b = baseline_cases.get(c.case_id)
             if b is None:
                 continue
-            if b.get("passed") and not c.result.passed:
+            b_passed = b.get("passed")
+            c_passed = c.result.passed
+            if b_passed and not c_passed:
                 regressions.append({
                     "case_id": c.case_id,
                     "title": c.title,
@@ -228,16 +323,46 @@ class BaselineManager:
                     "current_passed": False,
                     "error": c.result.error_analysis[:100],
                 })
-            elif not b.get("passed") and c.result.passed:
+            elif not b_passed and c_passed:
                 fixes.append({
                     "case_id": c.case_id,
                     "title": c.title,
                     "baseline_passed": False,
                     "current_passed": True,
                 })
+            else:
+                # 通过状态不变，记录分数变化
+                b_score = b.get("score")
+                c_score = c.result.score
+                if b_score is not None and b_score != c_score:
+                    score_changes.append({
+                        "case_id": c.case_id,
+                        "title": c.title,
+                        "baseline_score": b_score,
+                        "current_score": c_score,
+                        "change": round(c_score - b_score, 2),
+                    })
 
-        new_cases = sorted(current_ids - baseline_ids)
-        removed_cases = sorted(baseline_ids - current_ids)
+        new_cases: list[dict] = []
+        for c in current_cases:
+            if c.case_id not in baseline_ids:
+                new_cases.append({
+                    "case_id": c.case_id,
+                    "title": c.title,
+                    "priority": c.priority.value,
+                    "current_passed": c.result.passed,
+                })
+        new_cases.sort(key=lambda x: x["case_id"])
+
+        removed_cases: list[dict] = []
+        for cid in sorted(baseline_ids - current_ids):
+            b = baseline_cases.get(cid, {})
+            removed_cases.append({
+                "case_id": cid,
+                "title": b.get("title") or "-",
+                "priority": b.get("priority") or "-",
+                "baseline_passed": b.get("passed"),
+            })
 
         if regressions:
             logger.warning(
@@ -246,10 +371,13 @@ class BaselineManager:
             )
         if fixes:
             logger.info(f"检测到 {len(fixes)} 个修复 case")
+        if score_changes:
+            logger.info(f"检测到 {len(score_changes)} 个分数变化 case")
 
         return {
             "regressions": regressions,
             "fixes": fixes,
+            "score_changes": score_changes,
             "new_cases": new_cases,
             "removed_cases": removed_cases,
         }

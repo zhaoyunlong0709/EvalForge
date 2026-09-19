@@ -1,0 +1,61 @@
+{
+  "case_type": "agent",
+  "case_id": "B004",
+  "title": "记忆召回-个性化饮食推荐",
+  "version": "v1.0",
+  "priority": "P1",
+  "scenario": "个性化推荐",
+  "dimensions": [
+    "D9.上下文记忆",
+    "D6.个性化"
+  ],
+  "tags": [
+    "记忆",
+    "个性化",
+    "benchmark"
+  ],
+  "conversation": [
+    {
+      "turn": 1,
+      "user": "今晚吃什么好呢？给点建议吧。",
+      "expect": "应召回用户饮食偏好记忆，给出个性化推荐，避免推荐忌口食物"
+    }
+  ],
+  "evaluation": {
+    "method": "llm_judge",
+    "template": "记忆使用评估",
+    "params": {
+      "memory_requirement": "用户不吃香菜和内脏类食物，偏好清淡口味，最近在减脂",
+      "forbidden_content": [
+        "香菜",
+        "内脏",
+        "肥肠",
+        "油炸"
+      ]
+    },
+    "threshold": 4
+  },
+  "trace": {
+    "retrieved_memories": [
+      "用户不吃香菜和内脏类食物。",
+      "用户偏好清淡口味，最近在减脂。",
+      "用户喜欢海鲜和蔬菜。"
+    ]
+  },
+  "golden": {
+    "annotator": "benchmark",
+    "annotated_at": "2026-08-25",
+    "expected_answer": "基于用户不吃香菜和内脏、偏好清淡口味、正在减脂的记忆，推荐低脂高蛋白的清淡食物（如清蒸鱼、蔬菜沙拉），避免推荐内脏和油炸食品",
+    "key_points": [
+      "召回饮食偏好",
+      "避开忌口食物",
+      "推荐符合减脂需求",
+      "个性化建议"
+    ],
+    "overall_score": 5,
+    "dimension_scores": {
+      "D9.上下文记忆": 5,
+      "D6.个性化": 5
+    }
+  }
+}

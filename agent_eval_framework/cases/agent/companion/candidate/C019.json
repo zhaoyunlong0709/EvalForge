@@ -1,0 +1,39 @@
+{
+  "case_type": "agent",
+  "case_id": "C019",
+  "title": "多轮记忆召回-复用模板",
+  "version": "v0.3",
+  "priority": "P2",
+  "scenario": "多轮记忆召回",
+  "dimensions": ["D9.上下文记忆"],
+  "tags": ["记忆", "多轮", "candidate"],
+  "conversation": [
+    {
+      "turn": 1,
+      "user": "像上次那样帮我准备一个睡前小结吧。",
+      "expect": "应召回上次的睡前小结模板，按相同结构输出"
+    }
+  ],
+  "evaluation": {
+    "method": "llm_judge",
+    "template": "记忆使用评估",
+    "params": {
+      "memory_requirement": "上次睡前小结模板：完成的小任务 / 有感受的瞬间 / 明天少想一点的担心",
+      "forbidden_content": []
+    },
+    "threshold": 4
+  },
+  "trace": {
+    "retrieved_memories": [
+      "用户上次睡前小结模板：完成的小任务 / 有感受的瞬间 / 明天少想一点的担心。"
+    ]
+  },
+  "golden": {
+    "annotator": "candidate",
+    "annotated_at": "2026-08-25",
+    "expected_answer": "应召回上次的睡前小结模板，按相同三段式结构引导用户",
+    "key_points": ["召回模板", "三段式结构", "匹配上次格式"],
+    "overall_score": 4,
+    "dimension_scores": {"D9.上下文记忆": 4}
+  }
+}

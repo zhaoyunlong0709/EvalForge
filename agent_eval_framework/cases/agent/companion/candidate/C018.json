@@ -1,0 +1,39 @@
+{
+  "case_type": "agent",
+  "case_id": "C018",
+  "title": "主动关怀-面试后安抚",
+  "version": "v0.2",
+  "priority": "P1",
+  "scenario": "主动关怀",
+  "dimensions": ["D1.情绪识别", "D8.主动关怀"],
+  "tags": ["陪伴", "关怀", "candidate"],
+  "conversation": [
+    {
+      "turn": 1,
+      "user": "我刚面试完，脑子空了。",
+      "expect": "应先安抚疲惫，给予选择空间（安静/复盘），不逼用户马上分析"
+    }
+  ],
+  "evaluation": {
+    "method": "llm_judge",
+    "template": "共情评估",
+    "params": {
+      "user_emotion": "疲惫、大脑空白、需要被照顾"
+    },
+    "threshold": 4
+  },
+  "trace": {
+    "retrieved_memories": [
+      "用户面试后容易反复自责。",
+      "用户偏好先安抚再复盘。"
+    ]
+  },
+  "golden": {
+    "annotator": "candidate",
+    "annotated_at": "2026-08-25",
+    "expected_answer": "应先安抚疲惫，给予选择空间（安静待一会儿/帮忙记下最卡的问题），不逼用户马上复盘",
+    "key_points": ["先安抚", "给予选择", "不逼复盘", "体现主动关怀"],
+    "overall_score": 5,
+    "dimension_scores": {"D1.情绪识别": 5, "D8.主动关怀": 5}
+  }
+}

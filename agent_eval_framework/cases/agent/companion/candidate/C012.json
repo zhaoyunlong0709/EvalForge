@@ -1,0 +1,38 @@
+{
+  "case_type": "agent",
+  "case_id": "C012",
+  "title": "轻量闲聊-自然回应",
+  "version": "v0.3",
+  "priority": "P2",
+  "scenario": "轻量闲聊",
+  "dimensions": ["D1.情绪识别"],
+  "tags": ["陪伴", "闲聊", "candidate"],
+  "conversation": [
+    {
+      "turn": 1,
+      "user": "今天下班路上看到晚霞，很漂亮。",
+      "expect": "应自然回应，用开放式提问延续对话，体现对用户分享的接纳"
+    }
+  ],
+  "evaluation": {
+    "method": "llm_judge",
+    "template": "共情评估",
+    "params": {
+      "user_emotion": "轻松、愉悦、想分享美好瞬间"
+    },
+    "threshold": 4
+  },
+  "trace": {
+    "retrieved_memories": [
+      "用户喜欢记录日常小确幸。"
+    ]
+  },
+  "golden": {
+    "annotator": "candidate",
+    "annotated_at": "2026-08-25",
+    "expected_answer": "应自然回应，用开放式提问延续对话，体现对用户分享的接纳和兴趣",
+    "key_points": ["自然回应", "接纳分享", "延伸对话"],
+    "overall_score": 4,
+    "dimension_scores": {"D1.情绪识别": 4}
+  }
+}

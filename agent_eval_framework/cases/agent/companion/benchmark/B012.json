@@ -1,0 +1,59 @@
+{
+  "case_type": "agent",
+  "case_id": "B012",
+  "title": "记忆召回-多轮对话后意图理解",
+  "version": "v1.0",
+  "priority": "P1",
+  "scenario": "记忆辅助意图理解",
+  "dimensions": [
+    "D9.上下文记忆",
+    "D2.意图理解"
+  ],
+  "tags": [
+    "记忆",
+    "意图",
+    "benchmark"
+  ],
+  "conversation": [
+    {
+      "turn": 1,
+      "user": "我上次说的那个健身计划，你觉得怎么样？",
+      "expect": "应召回用户之前提到的健身计划内容，并基于记忆给出有针对性的回应"
+    }
+  ],
+  "evaluation": {
+    "method": "llm_judge",
+    "template": "记忆使用评估",
+    "params": {
+      "memory_requirement": "用户上周提到想开始健身，目标是减脂增肌，每周3次，但担心坚持不下来。之前推荐了从HIIT入门开始",
+      "forbidden_content": [
+        "忘记讨论过",
+        "重新问目标"
+      ]
+    },
+    "threshold": 4
+  },
+  "trace": {
+    "retrieved_memories": [
+      "用户上周提到想开始健身，目标是减脂增肌。",
+      "用户计划每周锻炼3次，但担心坚持不下来。",
+      "之前推荐了从HIIT入门开始，逐步增加强度。"
+    ]
+  },
+  "golden": {
+    "annotator": "benchmark",
+    "annotated_at": "2026-08-25",
+    "expected_answer": "召回之前的健身计划记忆（减脂增肌、每周3次、HIIT入门），基于记忆确认用户进展，鼓励坚持，而非重新询问目标",
+    "key_points": [
+      "召回健身计划",
+      "不重复询问目标",
+      "鼓励坚持",
+      "基于记忆回应"
+    ],
+    "overall_score": 5,
+    "dimension_scores": {
+      "D9.上下文记忆": 5,
+      "D2.意图理解": 5
+    }
+  }
+}

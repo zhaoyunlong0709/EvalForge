@@ -1,0 +1,68 @@
+{
+  "case_type": "agent",
+  "case_id": "B016",
+  "title": "意图理解-多轮澄清需求",
+  "version": "v1.0",
+  "priority": "P1",
+  "scenario": "意图澄清",
+  "dimensions": [
+    "D2.意图理解",
+    "D7.多轮对话"
+  ],
+  "tags": [
+    "意图",
+    "多轮",
+    "benchmark"
+  ],
+  "conversation": [
+    {
+      "turn": 1,
+      "user": "帮我找一个东西。",
+      "expect": "识别意图不明确，主动追问用户需要找什么"
+    },
+    {
+      "turn": 2,
+      "user": "就是上次提到的那个，跟工作有关的。",
+      "expect": "结合记忆和上下文，进一步追问具体信息"
+    },
+    {
+      "turn": 3,
+      "user": "对，就是那个项目管理的模板。",
+      "expect": "确认理解，提供项目管理模板相关信息"
+    }
+  ],
+  "evaluation": {
+    "method": "llm_judge",
+    "template": "工具使用评估",
+    "params": {
+      "expected_tool": "搜索/知识库工具",
+      "expected_info": "项目管理模板",
+      "forbidden_content": [
+        "随意猜测",
+        "不追问直接给错误答案"
+      ]
+    },
+    "threshold": 4
+  },
+  "trace": {
+    "retrieved_memories": [
+      "用户之前讨论过需要项目管理模板来管理新项目。"
+    ]
+  },
+  "golden": {
+    "annotator": "benchmark",
+    "annotated_at": "2026-08-25",
+    "expected_answer": "第一轮识别意图模糊主动追问，第二轮结合记忆进一步追问，第三轮确认理解并提供项目管理模板，多轮澄清过程自然不机械",
+    "key_points": [
+      "识别意图模糊",
+      "主动追问",
+      "结合记忆",
+      "确认后提供答案"
+    ],
+    "overall_score": 5,
+    "dimension_scores": {
+      "D2.意图理解": 5,
+      "D7.多轮对话": 5
+    }
+  }
+}

@@ -1,0 +1,60 @@
+{
+  "case_type": "agent",
+  "case_id": "B008",
+  "title": "记忆召回-偏好驱动工具调用",
+  "version": "v1.0",
+  "priority": "P1",
+  "scenario": "记忆引导工具使用",
+  "dimensions": [
+    "D9.上下文记忆",
+    "D4.选择准确度"
+  ],
+  "tags": [
+    "记忆",
+    "工具",
+    "benchmark"
+  ],
+  "conversation": [
+    {
+      "turn": 1,
+      "user": "帮我推荐一个周末可以去的地方。",
+      "expect": "召回用户偏好（喜欢爬山/户外），调用本地推荐/地图工具，推荐符合偏好的目的地"
+    }
+  ],
+  "evaluation": {
+    "method": "llm_judge",
+    "template": "记忆使用评估",
+    "params": {
+      "memory_requirement": "用户喜欢户外活动，特别是爬山和徒步，偏好车程2小时内的目的地，不喜欢人多的地方",
+      "forbidden_content": [
+        "室内活动",
+        "商场",
+        "游乐园"
+      ]
+    },
+    "threshold": 4
+  },
+  "trace": {
+    "retrieved_memories": [
+      "用户喜欢户外活动，特别是爬山和徒步。",
+      "用户偏好车程2小时内的目的地。",
+      "用户不喜欢人多拥挤的地方。"
+    ]
+  },
+  "golden": {
+    "annotator": "benchmark",
+    "annotated_at": "2026-08-25",
+    "expected_answer": "基于用户喜欢户外爬山的偏好，推荐车程2小时内的爬山/徒步目的地，避开室内活动和人多景点，体现个性化和记忆召回",
+    "key_points": [
+      "召回户外偏好",
+      "推荐爬山目的地",
+      "符合距离要求",
+      "避开人多景点"
+    ],
+    "overall_score": 5,
+    "dimension_scores": {
+      "D9.上下文记忆": 5,
+      "D4.选择准确度": 5
+    }
+  }
+}

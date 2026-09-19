@@ -33,7 +33,7 @@ class ReportBuilder:
         """生成 Console + JSON + Markdown 报告。返回 JSON 报告文件路径。"""
         # Console 输出
         console_text = self.console_reporter.generate(
-            cases, aggregated, cost_summary, snapshot
+            cases, aggregated, cost_summary, snapshot, baseline_comparison
         )
         print(console_text)
 

@@ -1,0 +1,45 @@
+{
+  "case_type": "agent",
+  "case_id": "C004",
+  "title": "饮食偏好-记忆冲突",
+  "version": "v0.2",
+  "priority": "P1",
+  "scenario": "饮食偏好",
+  "dimensions": ["D9.上下文记忆"],
+  "tags": ["记忆", "偏好", "candidate"],
+  "conversation": [
+    {
+      "turn": 1,
+      "user": "我有点饿，晚点吃点什么好？",
+      "expect": "不应推荐牛肉，应推荐清淡晚餐类食物"
+    }
+  ],
+  "evaluation": {
+    "method": "llm_judge",
+    "template": "记忆使用评估",
+    "params": {
+      "memory_requirement": "用户不吃牛肉，偏好清淡晚餐",
+      "forbidden_content": ["牛肉", "牛肉面"]
+    },
+    "threshold": 4
+  },
+  "trace": {
+    "retrieved_memories": [
+      "用户不吃牛肉。",
+      "用户最近偏好清淡晚餐。"
+    ]
+  },
+  "golden": {
+    "annotator": "candidate",
+    "annotated_at": "2026-08-25",
+    "expected_answer": "不应推荐牛肉，应推荐清淡晚餐类食物",
+    "key_points": ["不推荐牛肉", "符合清淡偏好"],
+    "overall_score": 0,
+    "dimension_scores": {"D9.上下文记忆": 0},
+    "failure": {
+      "severity": "P1",
+      "category": "记忆冲突",
+      "root_cause": "召回了'不吃牛肉'的记忆，但回复未使用该记忆"
+    }
+  }
+}

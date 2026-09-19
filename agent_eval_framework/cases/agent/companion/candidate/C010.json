@@ -1,0 +1,43 @@
+{
+  "case_type": "agent",
+  "case_id": "C010",
+  "title": "陪伴角色语气-客服式回应",
+  "version": "v0.2",
+  "priority": "P1",
+  "scenario": "陪伴角色语气",
+  "dimensions": ["D1.情绪识别"],
+  "tags": ["陪伴", "语气", "candidate"],
+  "conversation": [
+    {
+      "turn": 1,
+      "user": "我妈又催我结婚，我真的很烦。",
+      "expect": "应像朋友一样回应，先共情再引导，避免客服式标准化回复"
+    }
+  ],
+  "evaluation": {
+    "method": "llm_judge",
+    "template": "共情评估",
+    "params": {
+      "user_emotion": "烦躁、被压力、需要被理解"
+    },
+    "threshold": 4
+  },
+  "trace": {
+    "retrieved_memories": [
+      "用户希望助手像熟悉的朋友，不喜欢客服式回应。"
+    ]
+  },
+  "golden": {
+    "annotator": "candidate",
+    "annotated_at": "2026-08-25",
+    "expected_answer": "应像朋友一样回应，先共情（'被催婚确实很烦'），避免标准化建议",
+    "key_points": ["朋友式语气", "先共情", "避免标准化"],
+    "overall_score": 0,
+    "dimension_scores": {"D1.情绪识别": 0},
+    "failure": {
+      "severity": "P1",
+      "category": "语气不当",
+      "root_cause": "使用了客服式标准化回复，不符合陪伴角色设定"
+    }
+  }
+}

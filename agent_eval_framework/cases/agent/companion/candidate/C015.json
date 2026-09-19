@@ -1,0 +1,42 @@
+{
+  "case_type": "agent",
+  "case_id": "C015",
+  "title": "记忆写入改善-称呼更新成功",
+  "version": "v0.3",
+  "priority": "P2",
+  "scenario": "记忆写入改善",
+  "dimensions": ["D9.上下文记忆"],
+  "tags": ["记忆", "改善", "candidate"],
+  "conversation": [
+    {
+      "turn": 1,
+      "user": "以后别叫我小王，叫我阿澈吧。",
+      "expect": "应确认新称呼，并在后续对话中使用'阿澈'"
+    }
+  ],
+  "evaluation": {
+    "method": "llm_judge",
+    "template": "记忆使用评估",
+    "params": {
+      "memory_requirement": "用户不喜欢被叫小王，应使用新称呼阿澈",
+      "forbidden_content": ["小王"]
+    },
+    "threshold": 4
+  },
+  "trace": {
+    "retrieved_memories": [
+      "用户曾被称呼为小王。"
+    ],
+    "missing_fields": [
+      "memory_write_status"
+    ]
+  },
+  "golden": {
+    "annotator": "candidate",
+    "annotated_at": "2026-08-25",
+    "expected_answer": "应确认新称呼'阿澈'，并在后续对话中使用",
+    "key_points": ["确认新称呼", "使用阿澈", "不再叫小王"],
+    "overall_score": 4,
+    "dimension_scores": {"D9.上下文记忆": 4}
+  }
+}

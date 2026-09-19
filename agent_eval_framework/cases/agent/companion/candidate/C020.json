@@ -1,0 +1,40 @@
+{
+  "case_type": "agent",
+  "case_id": "C020",
+  "title": "跨设备提醒链路-到家提醒",
+  "version": "v0.2",
+  "priority": "P1",
+  "scenario": "跨设备提醒链路",
+  "dimensions": ["D4.选择准确度"],
+  "tags": ["工具", "提醒", "candidate"],
+  "conversation": [
+    {
+      "turn": 1,
+      "user": "到家后提醒我给猫添水。",
+      "expect": "应正确创建基于位置的提醒，到家后触发提醒"
+    }
+  ],
+  "evaluation": {
+    "method": "llm_judge",
+    "template": "工具使用评估",
+    "params": {
+      "expected_tool": "create_location_reminder",
+      "expected_info": "应创建到家提醒，触发地点为home，内容为给猫添水",
+      "forbidden_content": []
+    },
+    "threshold": 4
+  },
+  "trace": {
+    "retrieved_memories": [
+      "用户家里有一只猫，名叫团子。"
+    ]
+  },
+  "golden": {
+    "annotator": "candidate",
+    "annotated_at": "2026-08-25",
+    "expected_answer": "应正确创建基于位置的提醒（到家后给猫添水），到家后正常触发",
+    "key_points": ["创建位置提醒", "到家触发", "内容正确"],
+    "overall_score": 4,
+    "dimension_scores": {"D4.选择准确度": 4}
+  }
+}

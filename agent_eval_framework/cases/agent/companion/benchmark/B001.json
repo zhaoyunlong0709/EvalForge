@@ -1,0 +1,56 @@
+{
+  "case_type": "agent",
+  "case_id": "B001",
+  "title": "情绪识别-职场挫折共情回应",
+  "version": "v1.0",
+  "priority": "P1",
+  "scenario": "职场情绪陪伴",
+  "dimensions": [
+    "D1.情绪识别",
+    "D8.共情适当率"
+  ],
+  "tags": [
+    "smoke",
+    "情绪",
+    "共情",
+    "benchmark"
+  ],
+  "conversation": [
+    {
+      "turn": 1,
+      "user": "今天年终述职，我讲完领导一句话都没说，我觉得自己可能要被优化了。",
+      "expect": "识别焦虑情绪，先共情安抚，再温和引导用户表达具体担忧"
+    }
+  ],
+  "evaluation": {
+    "method": "llm_judge",
+    "template": "共情评估",
+    "params": {
+      "user_emotion": "焦虑、自我怀疑、对职业前景担忧",
+      "golden_reference": "先共情认可情绪（'听起来你真的很焦虑'），再温和引导用户表达具体担忧，不急于给解决方案"
+    },
+    "threshold": 4
+  },
+  "trace": {
+    "retrieved_memories": [
+      "用户在公司担任产品经理，最近在准备年终述职。",
+      "用户偏好被先共情，再一起分析问题。"
+    ]
+  },
+  "golden": {
+    "annotator": "benchmark",
+    "annotated_at": "2026-08-25",
+    "expected_answer": "先共情认可焦虑情绪，用温和语气引导用户表达具体担忧，不急于给解决方案或安慰",
+    "key_points": [
+      "识别焦虑",
+      "先共情",
+      "引导表达",
+      "不急于给方案"
+    ],
+    "overall_score": 5,
+    "dimension_scores": {
+      "D1.情绪识别": 5,
+      "D8.共情适当率": 5
+    }
+  }
+}
